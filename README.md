@@ -21,6 +21,11 @@ pip 20.1.1 from /usr/local/lib/python3.8/site-packages/pip (python 3.8)
 ## Usage
 
 ```
+// 環境変数の設定
+export AWS_IOT_CERTIFICATE_NAME="<証明書の名前>"
+export AWS_IOT_ENDPOINT="<カスタムエンドポイント>"
+export AWS_IOT_CLIENT_ID="<モノの名前>"
+
 // デプロイ
 $ ./deploy.sh
 
