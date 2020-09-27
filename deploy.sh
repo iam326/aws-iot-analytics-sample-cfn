@@ -15,4 +15,4 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     NamePrefix=${PROJECT_NAME} \
-    IoTCertificateName=${IOT_CERTIFICATE_NAME}
+    IoTCertificateName=${AWS_IOT_CERTIFICATE_NAME}
