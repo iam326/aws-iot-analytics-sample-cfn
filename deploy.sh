@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-readonly PROJECT_NAME="aws-iot-analytics-sample"
+readonly PROJECT_NAME="aws_iot_analytics_sample"
 readonly TEMPLATE="`pwd`/template.yaml"
-readonly STACK_NAME="${PROJECT_NAME}-stack"
+readonly STACK_NAME="${PROJECT_NAME//_/-}-stack"
 
 aws cloudformation validate-template \
   --template-body "file://${TEMPLATE}"
