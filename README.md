@@ -25,5 +25,6 @@ pip 20.1.1 from /usr/local/lib/python3.8/site-packages/pip (python 3.8)
 $ ./deploy.sh
 
 // メッセージ送信
+$ pip3 install -r requirements.txt
 $ python3 publish_message.py
 ```
