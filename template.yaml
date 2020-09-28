@@ -124,10 +124,13 @@ Resources:
       Actions:
         - ActionName: SqlAction
           QueryAction:
-            SqlQuery: !Sub "SELECT * FROM ${NamePrefix}_iot_analytics_datastore"
+            SqlQuery: !Sub "SELECT * FROM ${NamePrefix}_iot_analytics_datastore WHERE __dt > current_date - interval '1' day"
       RetentionPeriod:
         NumberOfDays: 1
         Unlimited: false
+      Triggers:
+        - Schedule:
+            ScheduleExpression: rate(5 minute)
     DependsOn: IoTAnalyticsDatastore
   IoTBatchPutMessageRole:
     Type: AWS::IAM::Role
