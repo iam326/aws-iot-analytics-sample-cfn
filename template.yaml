@@ -8,6 +8,8 @@ Parameters:
     Type: String
   ChannelBucketName:
     Type: String
+  DatastoreBucketName:
+    Type: String
 
 Resources:
   IoTPolicy:
@@ -48,7 +50,7 @@ Resources:
               - sts:AssumeRole
       Path: "/"
       Policies:
-        - PolicyName: !Sub ${NamePrefix}_iot_analytics_put_object_role
+        - PolicyName: !Sub ${NamePrefix}_iot_analytics_channel_bucket_role
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -61,6 +63,32 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:s3:::${ChannelBucketName}"
                   - !Sub "arn:aws:s3:::${ChannelBucketName}/*"
+  IoTAnalyticsDatastoreBucketRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - iotanalytics.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub ${NamePrefix}_iot_analytics_datastore_bucket_role
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                  - "s3:DeleteObject"
+                  - "s3:GetBucketLocation"
+                Resource:
+                  - !Sub "arn:aws:s3:::${DatastoreBucketName}"
+                  - !Sub "arn:aws:s3:::${DatastoreBucketName}/*"
   IoTAnalyticsChannel:
     Type: AWS::IoTAnalytics::Channel
     Properties:
@@ -74,10 +102,9 @@ Resources:
     Properties:
       DatastoreName: !Sub ${NamePrefix}_iot_analytics_datastore
       DatastoreStorage:
-        ServiceManagedS3: {}
-      RetentionPeriod:
-        NumberOfDays: 1
-        Unlimited: false
+        CustomerManagedS3:
+          Bucket: !Ref DatastoreBucketName
+          RoleArn: !GetAtt IoTAnalyticsDatastoreBucketRole.Arn
   IoTAnalyticsPipeline:
     Type: AWS::IoTAnalytics::Pipeline
     Properties:
