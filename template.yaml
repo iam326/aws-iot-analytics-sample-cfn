@@ -6,6 +6,8 @@ Parameters:
     Type: String
   IoTCertificateName:
     Type: String
+  ChannelBucketName:
+    Type: String
 
 Resources:
   IoTPolicy:
@@ -32,15 +34,41 @@ Resources:
     Properties:
       ThingName: !Ref IoTThing
       Principal: !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:cert/${IoTCertificateName}
+  IoTAnalyticsChannelBucketRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - iotanalytics.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub ${NamePrefix}_iot_analytics_put_object_role
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                  - "s3:GetBucketLocation"
+                Resource:
+                  - !Sub "arn:aws:s3:::${ChannelBucketName}"
+                  - !Sub "arn:aws:s3:::${ChannelBucketName}/*"
   IoTAnalyticsChannel:
     Type: AWS::IoTAnalytics::Channel
     Properties:
       ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
       ChannelStorage:
-        ServiceManagedS3: {}
-      RetentionPeriod:
-        NumberOfDays: 1
-        Unlimited: false
+        CustomerManagedS3:
+          Bucket: !Ref ChannelBucketName
+          RoleArn: !GetAtt IoTAnalyticsChannelBucketRole.Arn
   IoTAnalyticsDatastore:
     Type: AWS::IoTAnalytics::Datastore
     Properties:
@@ -73,7 +101,8 @@ Resources:
       RetentionPeriod:
         NumberOfDays: 1
         Unlimited: false
-  IoTAnalyticsBatchPutMessageRole:
+    DependsOn: IoTAnalyticsDatastore
+  IoTBatchPutMessageRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -87,14 +116,13 @@ Resources:
               - sts:AssumeRole
       Path: "/"
       Policies:
-        - PolicyName: !Sub ${NamePrefix}_iot_analytics_topic_rule
+        - PolicyName: !Sub ${NamePrefix}_iot_batch_put_message_role
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action:
-                  - "iotanalytics:BatchPutMessage"
-                Resource: "*"
+                Action: "iotanalytics:BatchPutMessage"
+                Resource: !Sub "arn:aws:iotanalytics:${AWS::Region}:${AWS::AccountId}:channel/${NamePrefix}_iot_analytics_channel"
   IoTTopicRule:
     Type: AWS::IoT::TopicRule
     Properties:
@@ -103,7 +131,7 @@ Resources:
         Actions:
           - IotAnalytics:
               ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
-              RoleArn: !GetAtt IoTAnalyticsBatchPutMessageRole.Arn
+              RoleArn: !GetAtt IoTBatchPutMessageRole.Arn
         AwsIotSqlVersion: "2016-03-23"
         RuleDisabled: false
         Sql: "SELECT * FROM 'iot/topic'"
