@@ -114,6 +114,11 @@ Resources:
         - Channel:
             Name: pipeline_channel_activity
             ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
+            Next: pipeline_math_activity
+          Math:
+            Name: pipeline_math_activity
+            Attribute: temperature_f
+            Math: temperature * 1.8 + 32
             Next: pipeline_datastore_activity
           Datastore:
             Name: pipeline_datastore_activity
