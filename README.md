@@ -1,5 +1,7 @@
 # aws-iot-analytics-sample-cfn
 
+AWS IoT Analytics の各リソースを CloudFormation で構築するサンプルです
+
 ## Environment
 
 ```
