@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
-from awscrt import io, mqtt
-from awsiot import mqtt_connection_builder
+import datetime
 import json
 import os
+import random
+from time import sleep
+
+from awscrt import io, mqtt
+from awsiot import mqtt_connection_builder
 
 ENDPOINT = os.environ['AWS_IOT_ENDPOINT']
 CLIENT_ID = os.environ['AWS_IOT_CLIENT_ID']
@@ -11,6 +15,7 @@ PATH_TO_CERT = 'certificates/certificate.pem.crt'
 PATH_TO_KEY = 'certificates/private.pem.key'
 PATH_TO_ROOT = 'certificates/AmazonRootCA1.pem'
 TOPIC = 'iot/topic'
+WAIT_TIME = 10
 
 
 def main():
@@ -34,13 +39,25 @@ def main():
     connect_future.result()
     print('Connected!')
 
-    message = {'temperature': 23}
-    mqtt_connection.publish(topic=TOPIC, payload=json.dumps(
-        message), qos=mqtt.QoS.AT_LEAST_ONCE)
-    print('Published: {} to the topic: {}'.format(json.dumps(message), TOPIC))
+    try:
+        while True:
+            now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            rand = random.randint(10, 30)
+            message = {
+                'datetime': now,
+                'temperature': rand
+            }
+            mqtt_connection.publish(topic=TOPIC, payload=json.dumps(
+                message), qos=mqtt.QoS.AT_LEAST_ONCE)
+            print('Published: {} to the topic: {}'.format(
+                json.dumps(message), TOPIC))
+            sleep(WAIT_TIME)
+    except KeyboardInterrupt:
+        pass
 
     disconnect_future = mqtt_connection.disconnect()
     disconnect_future.result()
+    print('Disconnected!')
 
 
 if __name__ == '__main__':
