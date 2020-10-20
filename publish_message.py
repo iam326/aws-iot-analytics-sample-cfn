@@ -42,7 +42,7 @@ def main():
     try:
         while True:
             now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            rand = random.randint(10, 30)
+            rand = random.randint(0, 50)
             message = {
                 'datetime': now,
                 'temperature': rand

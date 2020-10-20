@@ -114,10 +114,15 @@ Resources:
         - Channel:
             Name: pipeline_channel_activity
             ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
+            Next: pipeline_filter_activity
+          Filter:
+            Name: pipeline_filter_activity
+            Filter: temperature >= 10 AND temperature <= 40
             Next: pipeline_math_activity
           Math:
             Name: pipeline_math_activity
             Attribute: temperature_f
+            # 摂氏 -> 華氏
             Math: temperature * 1.8 + 32
             Next: pipeline_datastore_activity
           Datastore:
