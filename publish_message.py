@@ -44,6 +44,10 @@ def main():
             now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             rand = random.randint(0, 50)
             message = {
+                'device': {
+                    'id': 'device-1',
+                    'name': 'hoge'
+                },
                 'datetime': now,
                 'temperature': rand
             }

@@ -114,6 +114,12 @@ Resources:
         - Channel:
             Name: pipeline_channel_activity
             ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
+            Next: pipeline_add_attributes_activity
+          AddAttributes:
+            Name: pipeline_add_attributes_activity
+            Attributes:
+              device.id: id
+              device.name: name
             Next: pipeline_filter_activity
           Filter:
             Name: pipeline_filter_activity
