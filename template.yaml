@@ -120,6 +120,11 @@ Resources:
             Attributes:
               device.id: id
               device.name: name
+            Next: pipeline_remove_attributes_activity
+          RemoveAttributes:
+            Name: pipeline_remove_attributes_activity
+            Attributes:
+              - device
             Next: pipeline_filter_activity
           Filter:
             Name: pipeline_filter_activity
