@@ -32,10 +32,9 @@ Resources:
             Statement:
             - Effect: Allow
               Action:
-                - "logs:*"
-                #- "logs:CreateLogGruop"
-                #- "logs:CreateLogStream"
-                #- "logs:PutLogEvents"
+                - "logs:CreateLogGruop"
+                - "logs:CreateLogStream"
+                - "logs:PutLogEvents"
               Resource: "arn:aws:logs:*:*:*"
   LambdaFunction:
     Type: AWS::Lambda::Function
