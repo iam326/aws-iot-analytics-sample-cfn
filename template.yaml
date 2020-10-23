@@ -6,10 +6,6 @@ Parameters:
     Type: String
   IoTCertificateName:
     Type: String
-  ChannelBucketName:
-    Type: String
-  DatastoreBucketName:
-    Type: String
 
 Resources:
   LambdaExecutionRole:
@@ -87,76 +83,18 @@ Resources:
     Properties:
       ThingName: !Ref IoTThing
       Principal: !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:cert/${IoTCertificateName}
-  IoTAnalyticsChannelBucketRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - iotanalytics.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: "/"
-      Policies:
-        - PolicyName: !Sub ${NamePrefix}_iot_analytics_channel_bucket_role
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "s3:PutObject"
-                  - "s3:GetObject"
-                  - "s3:ListBucket"
-                  - "s3:GetBucketLocation"
-                Resource:
-                  - !Sub "arn:aws:s3:::${ChannelBucketName}"
-                  - !Sub "arn:aws:s3:::${ChannelBucketName}/*"
-  # IoTAnalyticsDatastoreBucketRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - iotanalytics.amazonaws.com
-  #           Action:
-  #             - sts:AssumeRole
-  #     Path: "/"
-  #     Policies:
-  #       - PolicyName: !Sub ${NamePrefix}_iot_analytics_datastore_bucket_role
-  #         PolicyDocument:
-  #           Version: "2012-10-17"
-  #           Statement:
-  #             - Effect: Allow
-  #               Action:
-  #                 - "s3:PutObject"
-  #                 - "s3:DeleteObject"
-  #                 - "s3:GetBucketLocation"
-  #               Resource:
-  #                 - !Sub "arn:aws:s3:::${DatastoreBucketName}"
-  #                 - !Sub "arn:aws:s3:::${DatastoreBucketName}/*"
   IoTAnalyticsChannel:
     Type: AWS::IoTAnalytics::Channel
     Properties:
       ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
       ChannelStorage:
-        CustomerManagedS3:
-          Bucket: !Ref ChannelBucketName
-          RoleArn: !GetAtt IoTAnalyticsChannelBucketRole.Arn
+        ServiceManagedS3: {}
   IoTAnalyticsDatastore:
     Type: AWS::IoTAnalytics::Datastore
     Properties:
       DatastoreName: !Sub ${NamePrefix}_iot_analytics_datastore
       DatastoreStorage:
         ServiceManagedS3: {}
-        #CustomerManagedS3:
-        #  Bucket: !Ref DatastoreBucketName
-        #  RoleArn: !GetAtt IoTAnalyticsDatastoreBucketRole.Arn
   IoTAnalyticsPipeline:
     Type: AWS::IoTAnalytics::Pipeline
     Properties:
