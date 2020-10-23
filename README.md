@@ -34,4 +34,13 @@ $ ./deploy.sh
 // メッセージ送信
 $ pip3 install -r requirements.txt
 $ python3 publish_message.py
+
+Connecting to hogehoge.iot.ap-northeast-1.amazonaws.com with client ID aws_iot_analytics_sample_iot_thing...
+Connected!
+Published: {"device": {"id": "device-1", "name": "hoge"}, "datetime": "2020-10-24 01:19:54", "temperature": 21} to the topic: iot/topic
+Published: {"device": {"id": "device-1", "name": "hoge"}, "datetime": "2020-10-24 01:20:04", "temperature": 39} to the topic: iot/topic
+
+...
+
+Disconnected!
 ```
