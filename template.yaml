@@ -8,6 +8,53 @@ Parameters:
     Type: String
 
 Resources:
+
+  ### AWS IoT Core ###
+
+  IoTPolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "iot:*"
+            Resource: "*"
+      PolicyName: !Sub ${NamePrefix}_iot_policy
+
+  IoTThing:
+    Type: AWS::IoT::Thing
+    Properties:
+      ThingName: !Sub ${NamePrefix}_iot_thing
+
+  IoTPolicyPrincipalAttachment:
+    Type: AWS::IoT::PolicyPrincipalAttachment
+    Properties:
+      PolicyName: !Ref IoTPolicy
+      Principal: !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:cert/${IoTCertificateName}
+
+  IoTThingPrincipalAttachment:
+    Type: AWS::IoT::ThingPrincipalAttachment
+    Properties:
+      ThingName: !Ref IoTThing
+      Principal: !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:cert/${IoTCertificateName}
+
+  ### AWS IoT Analytics ###
+
+  IoTAnalyticsChannel:
+    Type: AWS::IoTAnalytics::Channel
+    Properties:
+      ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
+      ChannelStorage:
+        ServiceManagedS3: {}
+
+  IoTAnalyticsDatastore:
+    Type: AWS::IoTAnalytics::Datastore
+    Properties:
+      DatastoreName: !Sub ${NamePrefix}_iot_analytics_datastore
+      DatastoreStorage:
+        ServiceManagedS3: {}
+
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -23,6 +70,7 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - !Sub 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -53,86 +101,59 @@ Resources:
             logger.info("event after processing: {}".format(event))
 
             return event
+
   LambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt LambdaFunction.Arn
       Principal: iotanalytics.amazonaws.com
-  IoTPolicy:
-    Type: AWS::IoT::Policy
-    Properties:
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action: "iot:*"
-            Resource: "*"
-      PolicyName: !Sub ${NamePrefix}_iot_policy
-  IoTThing:
-    Type: AWS::IoT::Thing
-    Properties:
-      ThingName: !Sub ${NamePrefix}_iot_thing
-  IoTPolicyPrincipalAttachment:
-    Type: AWS::IoT::PolicyPrincipalAttachment
-    Properties:
-      PolicyName: !Ref IoTPolicy
-      Principal: !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:cert/${IoTCertificateName}
-  IoTThingPrincipalAttachment:
-    Type: AWS::IoT::ThingPrincipalAttachment
-    Properties:
-      ThingName: !Ref IoTThing
-      Principal: !Sub arn:aws:iot:${AWS::Region}:${AWS::AccountId}:cert/${IoTCertificateName}
-  IoTAnalyticsChannel:
-    Type: AWS::IoTAnalytics::Channel
-    Properties:
-      ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
-      ChannelStorage:
-        ServiceManagedS3: {}
-  IoTAnalyticsDatastore:
-    Type: AWS::IoTAnalytics::Datastore
-    Properties:
-      DatastoreName: !Sub ${NamePrefix}_iot_analytics_datastore
-      DatastoreStorage:
-        ServiceManagedS3: {}
+
   IoTAnalyticsPipeline:
     Type: AWS::IoTAnalytics::Pipeline
     Properties:
       PipelineName: !Sub ${NamePrefix}_iot_analytics_pipeline
       PipelineActivities:
         - Channel:
+            # データの取得元指定する
             Name: pipeline_channel_activity
             ChannelName: !Sub ${NamePrefix}_iot_analytics_channel
             Next: pipeline_add_attributes_activity
           AddAttributes:
+            # 既存の属性 device を別の属性 id, name に変換する
             Name: pipeline_add_attributes_activity
             Attributes:
               device.id: id
               device.name: name
             Next: pipeline_remove_attributes_activity
           RemoveAttributes:
+            # 既存の属性 device を削除する
             Name: pipeline_remove_attributes_activity
             Attributes:
               - device
             Next: pipeline_filter_activity
           Filter:
+            # 温度が10~40の範囲にフィルタする
             Name: pipeline_filter_activity
             Filter: temperature >= 10 AND temperature <= 40
             Next: pipeline_math_activity
           Math:
+            # 摂氏を華氏に変換して新しい属性 temperature_f を作る
             Name: pipeline_math_activity
             Attribute: temperature_f
-            # 摂氏 -> 華氏
             Math: temperature * 1.8 + 32
             Next: pipeline_lambda_activity
           Lambda:
+            # Lambdaを叩いて新しい属性 temperature_copy を作る
             Name: pipeline_lambda_activity 
             BatchSize: 1 
             LambdaName: !Sub ${NamePrefix}_pipeline_lambda_function
             Next: pipeline_datastore_activity
           Datastore:
+            # データの保存先指定する
             Name: pipeline_datastore_activity
             DatastoreName: !Sub ${NamePrefix}_iot_analytics_datastore
+
   IoTAnalyticsDataset:
     Type: AWS::IoTAnalytics::Dataset
     Properties:
@@ -140,6 +161,7 @@ Resources:
       Actions:
         - ActionName: SqlAction
           QueryAction:
+            # 当日分のデータのみ取得する
             SqlQuery: !Sub "SELECT * FROM ${NamePrefix}_iot_analytics_datastore WHERE __dt > current_date - interval '1' day"
       RetentionPeriod:
         NumberOfDays: 1
@@ -148,6 +170,7 @@ Resources:
         - Schedule:
             ScheduleExpression: rate(5 minute)
     DependsOn: IoTAnalyticsDatastore
+
   IoTBatchPutMessageRole:
     Type: AWS::IAM::Role
     Properties:
@@ -169,6 +192,7 @@ Resources:
               - Effect: Allow
                 Action: "iotanalytics:BatchPutMessage"
                 Resource: !Sub "arn:aws:iotanalytics:${AWS::Region}:${AWS::AccountId}:channel/${NamePrefix}_iot_analytics_channel"
+
   IoTTopicRule:
     Type: AWS::IoT::TopicRule
     Properties:
