@@ -39,7 +39,7 @@ Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: LambdaFunctionTest
+      FunctionName: !Sub ${NamePrefix}_pipeline_lambda_function
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: python3.7
@@ -199,7 +199,7 @@ Resources:
           Lambda:
             Name: pipeline_lambda_activity 
             BatchSize: 1 
-            LambdaName: LambdaFunctionTest 
+            LambdaName: !Sub ${NamePrefix}_pipeline_lambda_function
             Next: pipeline_datastore_activity
           Datastore:
             Name: pipeline_datastore_activity
