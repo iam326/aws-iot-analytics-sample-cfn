@@ -26,7 +26,7 @@ pip 20.1.1 from /usr/local/lib/python3.8/site-packages/pip (python 3.8)
 
 ```
 // 環境変数の設定 - AWS IoT Core で作った 1-Click 証明書を使用します
-export AWS_IOT_CERTIFICATE_NAME="<証明書の名前>"
+$ export AWS_IOT_CERTIFICATE_NAME="<証明書の名前>"
 
 $ ./deploy.sh
 ```
@@ -34,8 +34,8 @@ $ ./deploy.sh
 ### Publish messages
 
 ```
-export AWS_IOT_ENDPOINT="<カスタムエンドポイント>"
-export AWS_IOT_CLIENT_ID="<モノの名前>"
+$ export AWS_IOT_ENDPOINT="<カスタムエンドポイント>"
+$ export AWS_IOT_CLIENT_ID="<モノの名前>"
 
 // メッセージ送信
 $ pip3 install -r requirements.txt
